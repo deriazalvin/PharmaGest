@@ -17,7 +17,7 @@ caisse, les retours, les utilisateurs et les rapports PDF.
 
 ## Technologies
 
-Python, Django, SQLite, CSS responsive maison, Pillow, ReportLab.
+Python, Django, SQLite (PostgreSQL en production), Bootstrap 5, CSS responsive maison, Pillow, ReportLab.
 
 ## Installation
 

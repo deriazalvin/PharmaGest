@@ -599,3 +599,9 @@ body[data-theme="light"] .login-foot { color: #64748b; }
 @media (prefers-reduced-motion: reduce) {
     .metric-card:hover, .main-nav a:hover { transform: none; }
 }
+/* Bootstrap 5 reboot : conserve les espacements des formulaires maison */
+.field label,
+.field-check label,
+.check-label {
+    margin-bottom: 0;
+}
