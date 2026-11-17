@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -93,6 +94,26 @@ class UtilisateurViewsTests(TestCase):
         )
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.is_active)
+
+
+class ReinitialisationMotDePasseTests(TestCase):
+    def test_reset_request_sends_a_working_email_link(self):
+        User = get_user_model()
+        utilisateur = User.objects.create_user(
+            username="oubli",
+            email="oubli@example.test",
+            password="secure-pass-123",
+        )
+        with self.settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            response = self.client.post(
+                reverse("password_reset"), {"email": utilisateur.email}
+            )
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Réinitialisation du mot de passe", mail.outbox[0].subject)
+        self.assertIn("/mot-de-passe/reinitialiser/", mail.outbox[0].body)
 
 
 class SauvegardeTests(TestCase):
