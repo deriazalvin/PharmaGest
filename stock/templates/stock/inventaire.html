@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Inventaire physique · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">INVENTAIRE & TRAÇABILITÉ</p><h1>Inventaire physique</h1><p class="muted">Saisissez les quantités réellement comptées. Chaque écart devient un mouvement de stock daté et attribué à votre compte.</p></div><a class="button button-quiet" href="{% url 'stock:liste' %}">← Stocks & lots</a></header>
+<form method="post" class="glass-panel data-panel" data-inventory-form>
+    {% csrf_token %}
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div><p class="eyebrow">COMPTAGE</p><h2>Relevé des lots</h2></div>
+        <span class="status-pill status-warn" data-inventory-diff>0 écart</span>
+    </div>
+    <p class="muted">Stock théorique total : {{ total_theorique }} unité(s) sur {{ lignes|length }} lot(s). Les lots bloqués ne sont pas inventoriés.</p>
+    <div class="table-wrap section-gap">
+        <table>
+            <thead><tr><th>Médicament</th><th>N° de lot</th><th>Péremption</th><th>Stock théorique</th><th>Quantité comptée</th><th>Écart</th></tr></thead>
+            <tbody>
+            {% for ligne in lignes %}
+            <tr data-inventory-row data-theoretical="{{ ligne.lot.quantite_disponible }}">
+                <td>{{ ligne.lot.medicament.nom }}<small class="inventory-dose">{{ ligne.lot.medicament.dosage }}</small></td>
+                <td>{{ ligne.lot.numero_lot }}</td>
+                <td>{{ ligne.lot.date_peremption|date:"d/m/Y" }}</td>
+                <td>{{ ligne.lot.quantite_disponible }}</td>
+                <td><input class="inventory-input" type="number" min="0" step="1" inputmode="numeric" name="lot_{{ ligne.lot.pk }}" value="{{ ligne.compte }}" required aria-label="Quantité comptée de {{ ligne.lot.medicament.nom }}, lot {{ ligne.lot.numero_lot }}"></td>
+                <td data-diff>—</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="empty-state">Aucun lot actif à inventorier.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if lignes %}
+    <div class="form-actions">
+        <button class="button button-primary" type="submit">Valider l'inventaire</button>
+        <a class="button button-quiet" href="{% url 'stock:liste' %}">Annuler</a>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-inventory-row]").forEach(function (row) {
+    var input = row.querySelector(".inventory-input");
+    var cell = row.querySelector("[data-diff]");
+    var theoretical = Number(row.dataset.theoretical);
+    function refresh() {
+        if (input.value === "") { cell.textContent = "—"; return; }
+        var difference = Number(input.value) - theoretical;
+        cell.textContent = difference > 0 ? "+" + difference : String(difference);
+        cell.classList.toggle("text-danger", difference < 0);
+        var total = 0;
+        document.querySelectorAll("[data-diff]").forEach(function (item) {
+            var value = parseInt(item.textContent, 10);
+            if (!isNaN(value) && value !== 0) { total += 1; }
+        });
+        var badge = document.querySelector("[data-inventory-diff]");
+        if (badge) { badge.textContent = total + (total > 1 ? " écarts" : " écart"); }
+    }
+    input.addEventListener("input", refresh);
+    refresh();
+});
+</script>
+{% endblock %}

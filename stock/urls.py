@@ -7,5 +7,6 @@ urlpatterns = [
     path("", views.liste_stock, name="liste"),
     path("nouveau-lot/", views.ajouter_lot, name="ajouter_lot"),
     path("ajustement/", views.ajuster_stock, name="ajuster"),
+    path("inventaire/", views.inventaire_physique, name="inventaire"),
     path("<int:pk>/blocage/", views.basculer_blocage_lot, name="bloquer"),
 ]

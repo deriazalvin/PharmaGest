@@ -605,3 +605,16 @@ body[data-theme="light"] .login-foot { color: #64748b; }
 .check-label {
     margin-bottom: 0;
 }
+
+/* Inventaire physique */
+.inventory-input {
+    width: 110px;
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid rgba(211, 240, 225, .15);
+    border-radius: 10px;
+    color: var(--ink);
+    background: rgba(6, 22, 20, .32);
+    font-size: 11px;
+}
+.inventory-dose { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }

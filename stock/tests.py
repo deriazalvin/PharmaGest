@@ -134,6 +134,81 @@ class StockViewsTests(TestCase):
         self.lot.refresh_from_db()
         self.assertFalse(self.lot.bloque)
 
+    def test_physical_inventory_page_lists_active_lots(self):
+        response = self.client.get(reverse("stock:inventaire"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Inventaire physique")
+        self.assertContains(response, self.lot.numero_lot)
+
+    def test_physical_inventory_adjusts_counted_lots_and_traces_gaps(self):
+        response = self.client.post(
+            reverse("stock:inventaire"),
+            {"lot_%s" % self.lot.pk: "7"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.lot.refresh_from_db()
+        self.assertEqual(self.lot.quantite_disponible, 7)
+        mouvement = MouvementStock.objects.get(
+            type=MouvementStock.Type.AJUSTEMENT
+        )
+        self.assertEqual(mouvement.quantite, 3)
+        self.assertIn("théorique 10", mouvement.motif)
+        self.assertIn("compté 7", mouvement.motif)
+        self.assertTrue(mouvement.reference.startswith("INV-"))
+        self.assertTrue(
+            JournalAudit.objects.filter(action="Inventaire physique").exists()
+        )
+
+    def test_physical_inventory_without_gap_creates_no_movement(self):
+        response = self.client.post(
+            reverse("stock:inventaire"),
+            {"lot_%s" % self.lot.pk: "10"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.lot.refresh_from_db()
+        self.assertEqual(self.lot.quantite_disponible, 10)
+        self.assertFalse(
+            MouvementStock.objects.filter(
+                type=MouvementStock.Type.AJUSTEMENT
+            ).exists()
+        )
+
+    def test_physical_inventory_rejects_invalid_counts_atomically(self):
+        other = LotStock.objects.create(
+            medicament=self.medicament,
+            numero_lot="SER-003",
+            date_peremption=date.today() + timedelta(days=300),
+            quantite_disponible=4,
+        )
+        response = self.client.post(
+            reverse("stock:inventaire"),
+            {
+                "lot_%s" % self.lot.pk: "8",
+                "lot_%s" % other.pk: "-1",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.lot.refresh_from_db()
+        other.refresh_from_db()
+        self.assertEqual(self.lot.quantite_disponible, 10)
+        self.assertEqual(other.quantite_disponible, 4)
+        self.assertFalse(
+            MouvementStock.objects.filter(
+                type=MouvementStock.Type.AJUSTEMENT
+            ).exists()
+        )
+
+    def test_physical_inventory_ignores_blocked_lots(self):
+        self.lot.bloque = True
+        self.lot.save(update_fields=("bloque",))
+        response = self.client.post(
+            reverse("stock:inventaire"),
+            {"lot_%s" % self.lot.pk: "0"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.lot.refresh_from_db()
+        self.assertEqual(self.lot.quantite_disponible, 10)
+
     def test_expired_or_blocked_lot_is_flagged_in_the_list(self):
         expired = LotStock.objects.create(
             medicament=self.medicament,

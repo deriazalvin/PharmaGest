@@ -84,6 +84,11 @@ Elle signale les lots périmés, bloqués et les prochaines péremptions.
 - **Nouveau lot** : crée un lot avec son stock initial.
 - **Ajuster le stock** : enregistre une variation positive ou négative avec un
   motif. Le stock ne peut jamais devenir négatif.
+- **Inventaire physique** : saisissez la quantité réellement comptée pour
+  chaque lot puis validez. Seuls les écarts produisent un mouvement
+  d'ajustement, sous une référence `INV-…` et avec votre compte comme auteur.
+  Les lots bloqués sont exclus du comptage et un inventaire sans écart ne crée
+  aucun mouvement.
 - **Bloquer / débloquer** un lot : un lot bloqué n'est plus vendable.
 
 ## 9. Utilisateurs et rôles

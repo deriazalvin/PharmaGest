@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Stocks & lots · PharmaGest{% endblock %}
 {% block content %}
-<header class="page-heading"><div><p class="eyebrow">INVENTAIRE & TRAÇABILITÉ</p><h1>Stocks & lots</h1><p class="muted">La délivrance suit les lots valides les plus proches de leur péremption (FEFO).</p></div><div class="heading-actions">{% if perms.stock.add_lotstock %}<a class="button button-soft" href="{% url 'stock:ajouter_lot' %}">Nouveau lot</a>{% endif %}{% if perms.stock.add_mouvementstock %}<a class="button button-primary" href="{% url 'stock:ajuster' %}">Ajuster le stock</a>{% endif %}</div></header>
+<header class="page-heading"><div><p class="eyebrow">INVENTAIRE & TRAÇABILITÉ</p><h1>Stocks & lots</h1><p class="muted">La délivrance suit les lots valides les plus proches de leur péremption (FEFO).</p></div><div class="heading-actions">{% if perms.stock.add_lotstock %}<a class="button button-soft" href="{% url 'stock:ajouter_lot' %}">Nouveau lot</a>{% endif %}{% if perms.stock.change_lotstock %}<a class="button button-soft" href="{% url 'stock:inventaire' %}">Inventaire physique</a>{% endif %}{% if perms.stock.add_mouvementstock %}<a class="button button-primary" href="{% url 'stock:ajuster' %}">Ajuster le stock</a>{% endif %}</div></header>
 {% include "shared/list_content.html" %}
 <section class="glass-panel data-panel section-gap">
     <div class="section-heading"><div><p class="eyebrow">JOURNAL</p><h2>Mouvements récents</h2></div></div>

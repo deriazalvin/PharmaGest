@@ -122,6 +122,91 @@ def ajuster_stock(request):
 
 @login_required
 @permission_required("stock.change_lotstock", raise_exception=True)
+def inventaire_physique(request):
+    lots = list(
+        LotStock.objects.filter(bloque=False)
+        .select_related("medicament")
+        .order_by("medicament__nom", "date_peremption", "numero_lot")
+    )
+    comptes = {lot.pk: lot.quantite_disponible for lot in lots}
+    erreurs = []
+
+    if request.method == "POST":
+        for lot in lots:
+            brut = request.POST.get(f"lot_{lot.pk}", "").strip()
+            try:
+                valeur = int(brut)
+            except (TypeError, ValueError):
+                erreurs.append(
+                    f"Quantité comptée invalide pour {lot.medicament.nom} "
+                    f"(lot {lot.numero_lot})."
+                )
+                continue
+            if valeur < 0:
+                erreurs.append(
+                    f"La quantité comptée de {lot.medicament.nom} "
+                    f"(lot {lot.numero_lot}) ne peut pas être négative."
+                )
+                continue
+            comptes[lot.pk] = valeur
+
+        if not erreurs:
+            reference = f"INV-{timezone.localtime():%Y%m%d-%H%M%S}"
+            ecarts = 0
+            with transaction.atomic():
+                for lot in lots:
+                    verrouille = LotStock.objects.select_for_update().get(pk=lot.pk)
+                    if verrouille.bloque:
+                        continue
+                    theorique = verrouille.quantite_disponible
+                    compte = comptes[lot.pk]
+                    difference = compte - theorique
+                    if difference == 0:
+                        continue
+                    verrouille.quantite_disponible = compte
+                    verrouille.save(update_fields=("quantite_disponible",))
+                    mouvement = MouvementStock.objects.create(
+                        medicament=verrouille.medicament,
+                        lot=verrouille,
+                        type=MouvementStock.Type.AJUSTEMENT,
+                        quantite=abs(difference),
+                        reference=reference,
+                        motif=(
+                            f"Inventaire physique : théorique {theorique}, "
+                            f"compté {compte} ({difference:+d})"
+                        ),
+                        auteur=request.user,
+                    )
+                    audit(
+                        request,
+                        "Inventaire physique",
+                        mouvement,
+                        mouvement.motif,
+                    )
+                    ecarts += 1
+            if ecarts:
+                messages.success(
+                    request,
+                    f"Inventaire enregistré : {ecarts} écart(s) ajusté(s) "
+                    f"sous la référence {reference}.",
+                )
+            else:
+                messages.info(
+                    request, "Inventaire enregistré : aucun écart constaté."
+                )
+            return redirect("stock:liste")
+
+    for message in erreurs:
+        messages.error(request, message)
+    lignes = [{"lot": lot, "compte": comptes[lot.pk]} for lot in lots]
+    return render(request, "stock/inventaire.html", {
+        "lignes": lignes,
+        "total_theorique": sum(lot.quantite_disponible for lot in lots),
+    })
+
+
+@login_required
+@permission_required("stock.change_lotstock", raise_exception=True)
 def basculer_blocage_lot(request, pk):
     if request.method != "POST":
         return redirect("stock:liste")
