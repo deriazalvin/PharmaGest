@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Retour de vente · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">OPÉRATION COMPENSATOIRE</p><h1>Enregistrer un retour</h1><p class="muted">{{ vente.reference }} · {{ ligne.medicament.nom }} · lot {{ ligne.lot.numero_lot }}</p></div></header>
+<section class="glass-panel form-panel"><form method="post" class="form-stack">{% csrf_token %}{% if form.non_field_errors %}<div class="form-alert">{{ form.non_field_errors }}</div>{% endif %}{% for field in form %}{% include "shared/_field.html" with field=field %}{% endfor %}<p class="payment-note">La remise en stock est interdite si le lot est périmé, bloqué ou si le médicament est archivé.</p><div class="form-actions"><button class="button button-primary" type="submit">Enregistrer le retour</button><a class="button button-quiet" href="{% url 'ventes:detail' vente.pk %}">Annuler</a></div></form></section>
+{% endblock %}

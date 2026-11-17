@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1729">
+    <title>{% block title %}PharmaGest{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script defer src="{% static 'js/animation-engine.js' %}"></script>
+    <script defer src="{% static 'js/main.js' %}"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Aller au contenu</a>
+    <div class="app-shell">
+        <aside class="sidebar glass-panel" id="sidebar">
+            <a class="brand" href="{% url 'rapports:tableau_de_bord' %}">
+                <span class="brand-mark">✳</span>
+                <span><strong>pharma</strong><small>GESTION DE PHARMACIE</small></span>
+            </a>
+            <p class="nav-caption">ESPACE DE TRAVAIL</p>
+            <nav class="main-nav" aria-label="Navigation principale">
+                <a class="{% if request.resolver_match.namespace == 'rapports' %}is-active{% endif %}" href="{% url 'rapports:tableau_de_bord' %}"><span class="nav-icon">⌂</span>Vue d'ensemble</a>
+                <a class="{% if request.resolver_match.namespace == 'medicaments' %}is-active{% endif %}" href="{% url 'medicaments:liste_medicaments' %}"><span class="nav-icon">✚</span>Médicaments</a>
+                <a class="{% if request.resolver_match.namespace == 'categories' %}is-active{% endif %}" href="{% url 'categories:liste' %}"><span class="nav-icon">◈</span>Catégories</a>
+                <a class="{% if request.resolver_match.namespace == 'stock' %}is-active{% endif %}" href="{% url 'stock:liste' %}"><span class="nav-icon">▤</span>Stocks & lots</a>
+                <a class="{% if request.resolver_match.namespace == 'achats' %}is-active{% endif %}" href="{% url 'achats:liste' %}"><span class="nav-icon">↙</span>Achats</a>
+                <a class="{% if request.resolver_match.namespace == 'ventes' %}is-active{% endif %}" href="{% url 'ventes:liste' %}"><span class="nav-icon">↗</span>Ventes & caisse</a>
+                <a class="{% if request.resolver_match.namespace == 'clients' %}is-active{% endif %}" href="{% url 'clients:liste' %}"><span class="nav-icon">♙</span>Clients</a>
+                <a class="{% if request.resolver_match.namespace == 'fournisseurs' %}is-active{% endif %}" href="{% url 'fournisseurs:liste' %}"><span class="nav-icon">♧</span>Fournisseurs</a>
+                {% if user.is_superuser %}
+                <a class="{% if request.resolver_match.namespace == 'utilisateurs' %}is-active{% endif %}" href="{% url 'utilisateurs:liste' %}"><span class="nav-icon">⚙</span>Utilisateurs</a>
+                {% endif %}
+            </nav>
+            <div class="sidebar-foot">
+                <span class="status-pulse"></span>
+                <span>Gestion en temps réel</span>
+            </div>
+        </aside>
+        <button class="sidebar-backdrop" type="button" aria-label="Fermer le menu" tabindex="-1"></button>
+        <main class="main-area">
+            <header class="topbar glass-panel">
+                <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+                <div class="topbar-date">{% now "l d F Y" %}</div>
+                <div class="account-chip">
+                    <span class="avatar">{{ user.get_username|first|upper }}</span>
+                    <span class="account-name">{{ user.get_full_name|default:user.get_username }}<small>{{ user.groups.all|join:", "|default:"Équipe pharmacie" }}</small></span>
+                    <button class="icon-button theme-toggle" type="button" aria-label="Activer le thème clair" title="Changer de thème"><span aria-hidden="true">☼</span></button>
+                    <a class="icon-button" href="{% url 'password_change' %}" title="Changer le mot de passe" aria-label="Changer le mot de passe">⌑</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button class="icon-button" type="submit" title="Déconnexion" aria-label="Déconnexion">↪</button>
+                    </form>
+                </div>
+            </header>
+            {% if messages %}
+            <section class="toast-stack" aria-live="polite">
+                {% for message in messages %}
+                <div class="toast toast-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </section>
+            {% endif %}
+            <section class="page-content" id="main-content" tabindex="-1">
+                {% block content %}{% endblock %}
+            </section>
+            <footer class="footer-note">PharmaGest <span>·</span> Le soin, jusque dans la gestion.</footer>
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">ACCÈS & ÉQUIPE</p><h1>Utilisateurs</h1><p class="muted">Comptes, rôles et accès. Les mots de passe restent gérés par Django.</p></div><a class="button button-primary" href="{% url 'utilisateurs:ajouter' %}">＋ Ajouter un compte</a></header>
+<section class="glass-panel data-panel"><div class="table-wrap"><table><thead><tr><th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Rôles</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
+{% for compte in utilisateurs %}<tr><td>{{ compte.username }}</td><td>{{ compte.get_full_name|default:"—" }}</td><td>{{ compte.email|default:"—" }}</td><td>{{ compte.groups.all|join:", "|default:"—" }}</td><td>{% if compte.is_active %}Actif{% else %}Inactif{% endif %}</td><td class="table-actions"><a class="text-action" href="{% url 'utilisateurs:modifier' compte.pk %}">Modifier</a><form method="post" action="{% url 'utilisateurs:desactiver' compte.pk %}">{% csrf_token %}<button class="text-action" type="submit" data-confirm="Changer le statut de {{ compte.username }} ?">{% if compte.is_active %}Désactiver{% else %}Activer{% endif %}</button></form></td></tr>{% empty %}<tr><td colspan="6" class="empty-state">Aucun compte disponible.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">CONFIRMATION</p><h1>{{ title }}</h1></div></header>
+<section class="glass-panel confirm-panel">
+    <div class="confirm-mark">!</div>
+    <h2>Confirmer cette action ?</h2>
+    <p class="muted">Vous êtes sur le point de supprimer <strong>{{ object }}</strong>. Les éléments liés à l'historique seront conservés ou archivés.</p>
+    <form method="post" class="form-actions">
+        {% csrf_token %}
+        <button class="button button-danger" type="submit">Confirmer la suppression</button>
+        <a class="button button-quiet" href="{% url cancel_url %}">Garder cet élément</a>
+    </form>
+</section>
+{% endblock %}

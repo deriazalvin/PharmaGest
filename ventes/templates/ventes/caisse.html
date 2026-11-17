@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle vente · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">POINT DE VENTE</p><h1>Nouvelle vente</h1><p class="muted">Choisissez les articles : le stock est vérifié puis déduit en une seule transaction.</p></div><a class="button button-quiet" href="{% url 'ventes:liste' %}">← Ventes</a></header>
+<form method="post" class="checkout-grid" id="checkout-form">
+    {% csrf_token %}
+    <section class="glass-panel form-panel">
+        <p class="eyebrow">TRANSACTION</p><h2>Informations de paiement</h2>
+        {% if vente_form.non_field_errors %}<div class="form-alert">{{ vente_form.non_field_errors }}</div>{% endif %}
+        {{ vente_form.cle_idempotence }}
+        {% for field in vente_form %}{% if field.name != "cle_idempotence" %}{% include "shared/_field.html" with field=field %}{% endif %}{% endfor %}
+        <div class="payment-note">Les paiements mobile money restent « à vérifier » jusqu'à confirmation par un responsable.</div>
+    </section>
+    <section class="glass-panel data-panel cart-panel">
+        <div class="section-heading"><div><p class="eyebrow">PANIER</p><h2>Articles à délivrer</h2></div><button class="button button-soft" id="add-line" type="button">＋ Ajouter</button></div>
+        {{ lignes_formset.management_form }}
+        {% if lignes_formset.non_form_errors %}<div class="form-alert">{{ lignes_formset.non_form_errors }}</div>{% endif %}
+        <div id="sale-lines">
+            {% for line in lignes_formset %}
+                <div class="sale-line">
+                    {% for hidden in line.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="field"><label for="{{ line.medicament.id_for_label }}">Médicament</label>{{ line.medicament }}{% for error in line.medicament.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+                    <div class="field quantity-field"><label for="{{ line.quantite.id_for_label }}">Qté</label>{{ line.quantite }}{% for error in line.quantite.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+                    {% if line.DELETE %}<label class="remove-line">{{ line.DELETE }}<span>Retirer</span></label>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div id="empty-sale-line" class="hidden">
+            <div class="sale-line">
+                {% for hidden in lignes_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                <div class="field"><label for="{{ lignes_formset.empty_form.medicament.id_for_label }}">Médicament</label>{{ lignes_formset.empty_form.medicament }}</div>
+                <div class="field quantity-field"><label for="{{ lignes_formset.empty_form.quantite.id_for_label }}">Qté</label>{{ lignes_formset.empty_form.quantite }}</div>
+                {% if lignes_formset.empty_form.DELETE %}<label class="remove-line">{{ lignes_formset.empty_form.DELETE }}<span>Retirer</span></label>{% endif %}
+            </div>
+        </div>
+        <div class="cart-total"><span>Total estimatif</span><strong id="cart-total">0 Ar</strong></div>
+        <p class="micro-copy">Le prix enregistré correspond au tarif en vigueur lors de la vente. Le serveur recalcule et contrôle chaque ligne.</p>
+        <button class="button button-primary button-wide" type="submit">Confirmer la vente <span>→</span></button>
+    </section>
+</form>
+{{ catalogue|json_script:"catalogue-data" }}
+{% endblock %}
+{% block scripts %}
+<script>
+window.pharmaCatalogue = JSON.parse(document.getElementById("catalogue-data").textContent);
+</script>
+{% endblock %}

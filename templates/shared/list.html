@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · PharmaGest{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">GESTION PHARMACEUTIQUE</p><h1>{{ title }}</h1><p class="muted">{{ subtitle }}</p></div>
+    {% if create_url %}<a class="button button-primary" href="{% url create_url %}"><span>＋</span> {{ create_label }}</a>{% endif %}
+</header>
+{% include "shared/list_content.html" %}
+{% endblock %}

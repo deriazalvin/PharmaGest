@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{{ client.nom }} · Clients{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">FICHE CLIENT</p><h1>{{ client.nom }}</h1><p class="muted">{{ client.telephone|default:"Aucun téléphone" }} · {{ client.email|default:"Aucun e-mail" }}</p></div><a class="button button-quiet" href="{% url 'clients:liste' %}">← Clients</a></header>
+<section class="glass-panel data-panel"><h2>Historique des ventes</h2><div class="table-wrap"><table><thead><tr><th>Référence</th><th>Date</th><th>Total</th><th></th></tr></thead><tbody>{% for vente in ventes %}<tr><td>{{ vente.reference }}</td><td>{{ vente.cree_le|date:"d/m/Y H:i" }}</td><td>{{ vente.total|floatformat:2 }} Ar</td><td><a class="text-action" href="{% url 'ventes:detail' vente.pk %}">Ouvrir</a></td></tr>{% empty %}<tr><td colspan="4" class="empty-state">Aucune vente enregistrée.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

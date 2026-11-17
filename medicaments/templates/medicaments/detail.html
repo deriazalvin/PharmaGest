@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ medicament.nom }} · Médicaments{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">FICHE MÉDICAMENT</p><h1>{{ medicament.nom }}</h1><p class="muted">{{ medicament.denomination_generique|default:"" }} · {{ medicament.dosage }} · {{ medicament.forme }}</p></div><a class="button button-quiet" href="{% url 'medicaments:liste_medicaments' %}">← Catalogue</a></header>
+<div class="detail-grid">
+    <section class="glass-panel detail-card">
+        {% if medicament.photo %}<img class="medicine-photo" src="{{ medicament.photo.url }}" alt="Photo de {{ medicament.nom }}">{% else %}<div class="medicine-placeholder">✚</div>{% endif %}
+        <div class="detail-facts"><span>Catégorie</span><strong>{{ medicament.categorie }}</strong><span>Laboratoire</span><strong>{{ medicament.laboratoire|default:"—" }}</strong><span>Code-barres</span><strong>{{ medicament.code_barre|default:"—" }}</strong><span>Prix de vente</span><strong>{{ medicament.prix_vente|floatformat:2 }} Ar</strong><span>Stock disponible</span><strong>{{ medicament.quantite_disponible }}</strong></div>
+    </section>
+    <section class="glass-panel data-panel">
+        <h2>Lots & péremptions</h2>
+        <div class="table-wrap"><table><thead><tr><th>Lot</th><th>Péremption</th><th>Disponible</th><th>État</th></tr></thead><tbody>{% for lot in lots %}<tr><td>{{ lot.numero_lot }}</td><td>{{ lot.date_peremption|date:"d/m/Y" }}</td><td>{{ lot.quantite_disponible }}</td><td>{% if lot.bloque %}Bloqué{% elif lot.perime %}Périmé{% else %}Disponible{% endif %}</td></tr>{% empty %}<tr><td colspan="4" class="empty-state">Aucun lot en stock.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+</div>
+{% endblock %}

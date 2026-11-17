@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Vue d'ensemble · PharmaGest{% endblock %}
+{% block content %}
+<header class="dashboard-heading">
+    <div><p class="eyebrow">{% now "l" %} · PHARMACIE</p><h1>Une vue claire.<br><em>Un stock maîtrisé.</em></h1><p class="muted">Les indicateurs suivent les opérations réellement enregistrées.</p></div>
+    <a class="button button-primary" href="{% url 'ventes:nouvelle' %}">＋ Ouvrir la caisse</a>
+</header>
+<section class="metric-grid">
+    <article class="glass-panel metric-card"><span class="metric-label">CA du jour</span><strong data-count="{{ ca_jour|floatformat:2 }}">{{ ca_jour|floatformat:2 }} <small>Ar</small></strong><span class="metric-foot">Ventes validées, pas le bénéfice net</span></article>
+    <article class="glass-panel metric-card accent-card"><span class="metric-label">Encaissements confirmés</span><strong data-count="{{ encaisse_jour|floatformat:2 }}">{{ encaisse_jour|floatformat:2 }} <small>Ar</small></strong><span class="metric-foot">Hors paiements mobiles en attente</span></article>
+    <article class="glass-panel metric-card"><span class="metric-label">Ventes aujourd'hui</span><strong data-count="{{ ventes_jour }}">{{ ventes_jour }}</strong><span class="metric-foot">Transactions enregistrées</span></article>
+    <article class="glass-panel metric-card"><span class="metric-label">Médicaments actifs</span><strong data-count="{{ medicaments_actifs }}">{{ medicaments_actifs }}</strong><span class="metric-foot">Dans le catalogue</span></article>
+</section>
+<section class="dashboard-grid">
+    <article class="glass-panel data-panel">
+        <div class="section-heading"><div><p class="eyebrow">ATTENTION REQUISE</p><h2>Stock sous le seuil</h2></div><a class="text-action" href="{% url 'stock:liste' %}">Tout voir →</a></div>
+        <div class="alert-list">{% for medicament in stocks_faibles %}<div class="alert-row"><span class="alert-dot"></span><span><strong>{{ medicament.nom }}</strong><small>Seuil {{ medicament.seuil }}</small></span><b>{{ medicament.stock_vendable_calc }} en stock vendable</b></div>{% empty %}<p class="empty-inline">Tous les stocks sont au-dessus de leur seuil.</p>{% endfor %}</div>
+        <div class="panel-foot">{{ nombre_stocks_faibles }} médicament(s) à réapprovisionner</div>
+    </article>
+    <article class="glass-panel data-panel">
+        <div class="section-heading"><div><p class="eyebrow">SUIVI QUALITÉ</p><h2>Péremptions à surveiller</h2></div><a class="text-action" href="{% url 'stock:liste' %}">Lots →</a></div>
+        <div class="alert-list">{% for lot in lots_a_surveille %}<div class="alert-row"><span class="expiry-mark">⌛</span><span><strong>{{ lot.medicament.nom }}</strong><small>Lot {{ lot.numero_lot }}</small></span><b>{{ lot.date_peremption|date:"d/m/Y" }}</b></div>{% empty %}<p class="empty-inline">Aucune péremption à signaler dans les 90 jours.</p>{% endfor %}</div>
+        <div class="panel-foot">{{ nombre_peremptions }} lot(s) dans la fenêtre d'alerte</div>
+    </article>
+</section>
+<section class="dashboard-grid dashboard-bottom">
+    <article class="glass-panel data-panel">
+        <div class="section-heading"><div><p class="eyebrow">PERFORMANCE</p><h2>Produits les plus délivrés</h2></div></div>
+        <form class="period-filter" method="get"><label>Du <input type="date" name="debut" value="{{ debut|date:'Y-m-d' }}"></label><label>Au <input type="date" name="fin" value="{{ fin|date:'Y-m-d' }}"></label><button class="button button-soft" type="submit">Filtrer</button></form>
+        <div class="trend-chart" aria-label="Chiffre d'affaires par jour">
+            {% for point in ventes_par_jour %}<div class="trend-column" title="{{ point.total|floatformat:2 }} Ar"><strong>{{ point.total|floatformat:0 }}</strong><div class="trend-track"><i style="height:{{ point.hauteur }}"></i></div><span>{{ point.jour }}</span></div>{% empty %}<p class="empty-inline">Aucune vente sur la période choisie.</p>{% endfor %}
+        </div>
+        <div class="rank-list">{% for item in meilleures_ventes %}<div class="rank-row"><span class="rank-num">0{{ forloop.counter }}</span><span>{{ item.medicament__nom }}</span><strong>{{ item.quantite }}</strong></div>{% empty %}<p class="empty-inline">Aucune vente sur cette période.</p>{% endfor %}</div>
+    </article>
+    <article class="glass-panel data-panel report-card">
+        <div class="section-heading"><div><p class="eyebrow">À TÉLÉCHARGER</p><h2>Rapports</h2></div></div>
+        <div class="received-total"><span>Achats reçus sur la période</span><strong>{{ achats_recus_periode|floatformat:2 }} Ar</strong></div>
+        <a class="report-link" href="{% url 'rapports:ventes_pdf' %}"><span>Ventes & paiements</span><b>PDF ↗</b></a>
+        <a class="report-link" href="{% url 'rapports:stock_pdf' %}"><span>Lots & niveaux de stock</span><b>PDF ↗</b></a>
+        <a class="report-link" href="{% url 'rapports:achats_pdf' %}"><span>Commandes fournisseurs</span><b>PDF ↗</b></a>
+        <p class="micro-copy">Les rapports sont générés à partir des données réelles de l'application.</p>
+    </article>
+</section>
+{% endblock %}

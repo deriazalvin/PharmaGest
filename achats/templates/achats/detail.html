@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ commande.reference }} · Achats{% endblock %}
+{% block content %}
+<header class="page-heading"><div><p class="eyebrow">COMMANDE D'ACHAT</p><h1>{{ commande.reference }}</h1><p class="muted">{{ commande.fournisseur.nom }} · {{ commande.cree_le|date:"d/m/Y H:i" }} · {{ commande.get_statut_display }}</p></div><a class="button button-quiet" href="{% url 'achats:liste' %}">← Achats</a></header>
+<section class="glass-panel data-panel">
+    <div class="section-heading"><span></span><a class="button button-soft" href="{% url 'rapports:bon_commande' commande.pk %}">Bon de commande PDF</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Médicament</th><th>Commandé</th><th>Reçu</th><th>Prix unitaire</th><th>Total ligne</th></tr></thead><tbody>
+    {% for ligne in commande.lignes.all %}<tr><td>{{ ligne.medicament.nom }}</td><td>{{ ligne.quantite_commandee }}</td><td>{{ ligne.quantite_recue }}</td><td>{{ ligne.prix_unitaire|floatformat:2 }} Ar</td><td>{{ ligne.total|floatformat:2 }} Ar</td></tr>{% empty %}<tr><td colspan="5" class="empty-state">Aucun article.</td></tr>{% endfor %}
+    </tbody><tfoot><tr><th colspan="4">Montant commandé</th><th>{{ commande.total|floatformat:2 }} Ar</th></tr></tfoot></table></div>
+    <div class="form-actions">
+        {% if commande.statut == "brouillon" %}<form method="post" action="{% url 'achats:valider' commande.pk %}">{% csrf_token %}<button class="button button-primary" type="submit">Valider la commande</button></form>{% endif %}
+        {% if commande.statut == "brouillon" or commande.statut == "commandee" %}<form method="post" action="{% url 'achats:annuler' commande.pk %}" data-confirm="Annuler cette commande ?">{% csrf_token %}<button class="button button-danger" type="submit">Annuler</button></form>{% endif %}
+    </div>
+</section>
+{% for reception in commande.receptions.all %}
+<section class="glass-panel data-panel section-gap">
+    <div class="section-heading"><div><p class="eyebrow">RÉCEPTION</p><h2>{{ reception.reference }}</h2></div><a class="button button-soft" href="{% url 'rapports:bon_reception' commande.pk reception.pk %}">Bon de réception PDF</a></div>
+    <p class="muted">{{ reception.recue_le|date:"d/m/Y H:i" }} · Réceptionné par {{ reception.recue_par.get_username }}</p>
+</section>
+{% endfor %}
+{% if reception_form %}
+<section class="glass-panel form-panel">
+    <p class="eyebrow">ENTRÉE DE STOCK</p><h2>Réceptionner des marchandises</h2>
+    <p class="muted">La réception accepte des quantités partielles et exige un numéro de lot et une date de péremption valides.</p>
+    <form method="post" action="{% url 'achats:receptionner' commande.pk %}" class="form-stack">
+        {% csrf_token %}
+        {% if reception_form.non_field_errors %}<div class="form-alert">{{ reception_form.non_field_errors }}</div>{% endif %}
+        {% for field in reception_form %}{% include "shared/_field.html" with field=field %}{% endfor %}
+        <button class="button button-primary" type="submit">Enregistrer la réception <span>→</span></button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

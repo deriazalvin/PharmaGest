@@ -1,0 +1,48 @@
+<section class="glass-panel data-panel">
+    <form class="search-bar" method="get">
+        <label class="sr-only" for="list-search">Rechercher</label>
+        <span class="search-symbol">⌕</span>
+        <input id="list-search" type="search" name="q" value="{{ search }}" placeholder="Rechercher dans la liste…">
+        {% if categories %}
+        <select name="categorie" aria-label="Filtrer par catégorie">
+            <option value="">Toutes les catégories</option>
+            {% for categorie in categories %}<option value="{{ categorie.pk }}"{% if selected_category == categorie.pk|stringformat:"s" %} selected{% endif %}>{{ categorie.nom }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        {% if sort_options %}
+        <select name="tri" aria-label="Trier la liste">
+            {% for value, label in sort_options %}<option value="{{ value }}"{% if selected_sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        <button class="button button-soft" type="submit">Rechercher</button>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for row in rows %}
+                {% with object_id=row|last %}
+                <tr>
+                    {% for value in row %}{% if not forloop.last %}<td>{{ value|default:"—" }}</td>{% endif %}{% endfor %}
+                    <td class="table-actions">
+                        {% if detail_url %}<a class="text-action" href="{% url detail_url object_id %}">Ouvrir</a>{% endif %}
+                        {% if edit_url %}<a class="text-action" href="{% url edit_url object_id %}">Modifier</a>{% endif %}
+                        {% if delete_url %}<a class="text-action text-danger" href="{% url delete_url object_id %}">Supprimer</a>{% endif %}
+                        {% if toggle_url %}<form method="post" action="{% url toggle_url object_id %}">{% csrf_token %}<button class="text-action" type="submit" data-confirm="Changer le statut de ce lot ?">{% if row.4 == "Bloqué" %}Débloquer{% else %}Bloquer{% endif %}</button></form>{% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+            {% empty %}
+                <tr><td class="empty-state" colspan="{{ headers|length }}">Aucun résultat pour le moment.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="pagination" aria-label="Pagination">
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_previous %}<a href="?q={{ search|urlencode }}&page={{ page_obj.previous_page_number }}">← Précédent</a>{% endif %}
+        {% if page_obj.has_next %}<a href="?q={{ search|urlencode }}&page={{ page_obj.next_page_number }}">Suivant →</a>{% endif %}
+    </nav>
+    {% endif %}
+</section>
