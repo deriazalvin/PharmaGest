@@ -1,5 +1,9 @@
 from django import forms
+from PIL import Image, UnidentifiedImageError
+
 from .models import Medicament
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
 class MedicamentForm(forms.ModelForm):
@@ -49,6 +53,20 @@ class MedicamentForm(forms.ModelForm):
 
     def clean_photo(self):
         photo = self.cleaned_data.get("photo")
-        if photo and photo.size > 5 * 1024 * 1024:
+        if not photo or not hasattr(photo, "content_type"):
+            return photo
+        if photo.content_type not in ALLOWED_IMAGE_TYPES:
+            raise forms.ValidationError(
+                "Format d'image non autorisé. Utilisez JPEG, PNG, WEBP ou GIF."
+            )
+        if photo.size > 5 * 1024 * 1024:
             raise forms.ValidationError("La photo ne peut pas dépasser 5 Mo.")
+        try:
+            Image.open(photo).verify()
+        except (UnidentifiedImageError, OSError, ValueError):
+            raise forms.ValidationError(
+                "Le fichier envoyé n'est pas une image valide."
+            )
+        finally:
+            photo.seek(0)
         return photo
