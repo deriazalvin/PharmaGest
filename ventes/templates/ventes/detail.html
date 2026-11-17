@@ -3,7 +3,7 @@
 {% block content %}
 <header class="page-heading"><div><p class="eyebrow">REÇU DE VENTE</p><h1>{{ vente.reference }}</h1><p class="muted">{{ vente.cree_le|date:"d/m/Y H:i" }} · {{ vente.get_mode_paiement_display }} · {{ vente.effectuee_par.get_username }}</p></div><a class="button button-quiet" href="{% url 'ventes:liste' %}">← Ventes</a></header>
 <section class="glass-panel data-panel">
-    <div class="section-heading"><span></span><a class="button button-soft" href="{% url 'rapports:recu_vente' vente.pk %}">Télécharger le reçu PDF</a></div>
+    <div class="section-heading"><span></span><div class="heading-actions"><a class="button button-soft" href="{% url 'rapports:recu_vente' vente.pk %}">Télécharger le reçu PDF</a><a class="button button-soft" href="{% url 'rapports:facture_vente' vente.pk %}">Télécharger la facture PDF</a></div></div>
     <div class="section-heading"><h2>{{ vente.client|default:"Client comptoir" }}</h2><span class="status-pill {% if vente.annulee %}status-warn{% elif vente.paiement_confirme %}status-good{% else %}status-warn{% endif %}">{% if vente.annulee %}Vente annulée{% elif vente.paiement_confirme %}Paiement confirmé{% else %}Paiement à vérifier{% endif %}</span></div>
     <div class="table-wrap"><table><thead><tr><th>Médicament</th><th>Lot</th><th>Quantité</th><th>Prix unitaire</th><th>Sous-total</th><th>Retour</th></tr></thead><tbody>
     {% for ligne in lignes %}<tr><td>{{ ligne.medicament.nom }}</td><td>{{ ligne.lot.numero_lot }}</td><td>{{ ligne.quantite }}</td><td>{{ ligne.prix_unitaire|floatformat:2 }} Ar</td><td>{{ ligne.total|floatformat:2 }} Ar</td><td><a class="text-action" href="{% url 'ventes:retour' vente.pk ligne.pk %}">Enregistrer</a></td></tr>{% endfor %}

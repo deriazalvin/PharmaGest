@@ -24,7 +24,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from achats.models import CommandeAchat, ReceptionAchat, ReceptionAchat
+from achats.models import CommandeAchat, ReceptionAchat
 from medicaments.models import Medicament
 from stock.models import LotStock
 from ventes.models import LigneVente, Vente
@@ -245,6 +245,42 @@ def rapport_ventes_pdf(request):
 
 @login_required
 @permission_required("stock.view_lotstock", raise_exception=True)
+def rapport_peremptions_pdf(request):
+    today = timezone.localdate()
+    deadline = today + timedelta(days=90)
+    lots = (
+        LotStock.objects.select_related("medicament")
+        .filter(quantite_disponible__gt=0, date_peremption__lte=deadline)
+        .order_by("date_peremption", "medicament__nom")
+    )
+    rows = []
+    for lot in lots[:500]:
+        jours = (lot.date_peremption - today).days
+        rows.append(
+            [
+                lot.medicament.nom,
+                lot.numero_lot,
+                lot.date_peremption.strftime("%d/%m/%Y"),
+                str(lot.quantite_disponible),
+                "Périmé" if jours <= 0 else f"{jours} j",
+                "Bloqué" if lot.bloque else "À écouler",
+            ]
+        )
+    return _pdf_response(
+        "Produits proches de la péremption",
+        ("Médicament", "Lot", "Péremption", "Quantité", "Délai", "État"),
+        rows,
+        "peremptions.pdf",
+        (
+            f"Lots encore en stock dont la péremption intervient avant le "
+            f"{deadline:%d/%m/%Y}.",
+            "Les lots périmés ou bloqués ne sont jamais proposés à la vente.",
+        ),
+    )
+
+
+@login_required
+@permission_required("stock.view_lotstock", raise_exception=True)
 def rapport_stock_pdf(request):
     lots = LotStock.objects.select_related("medicament").order_by(
         "medicament__nom", "date_peremption"
@@ -329,6 +365,43 @@ def recu_vente_pdf(request, pk):
         ),
     )
     return response
+
+
+@login_required
+@permission_required("ventes.view_vente", raise_exception=True)
+def facture_vente_pdf(request, pk):
+    vente = get_object_or_404(
+        Vente.objects.select_related("client", "effectuee_par").prefetch_related(
+            "lignes__medicament", "lignes__lot"
+        ),
+        pk=pk,
+    )
+    rows = [
+        [
+            line.medicament.nom,
+            line.lot.numero_lot,
+            str(line.quantite),
+            f"{line.prix_unitaire:,.2f} Ar",
+            f"{line.total:,.2f} Ar",
+        ]
+        for line in vente.lignes.all()
+    ]
+    return _pdf_response(
+        f"Facture {vente.reference}",
+        ("Médicament", "Lot", "Quantité", "Prix unitaire", "Montant"),
+        rows,
+        f"facture-{vente.reference}.pdf",
+        (
+            f"Client : {vente.client.nom if vente.client else 'Client comptoir'}",
+            f"Date : {timezone.localtime(vente.cree_le):%d/%m/%Y %H:%M}",
+            f"Paiement : {vente.get_mode_paiement_display()} — "
+            f"{'confirmé' if vente.paiement_confirme else 'à vérifier'}",
+            f"Total : {vente.total:,.2f} Ar",
+            "Les prix appliqués sont ceux en vigueur au moment de la vente.",
+            "Mentions légales et fiscales à compléter selon la réglementation "
+            "applicable à Madagascar.",
+        ),
+    )
 
 
 @login_required

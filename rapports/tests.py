@@ -61,3 +61,16 @@ class RapportViewsTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response["Content-Type"], "application/pdf")
             self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_expiry_and_invoice_reports_return_pdf_documents(self):
+        expiry = self.client.get(reverse("rapports:peremptions_pdf"))
+        invoice = self.client.get(
+            reverse("rapports:facture_vente", args=(self.vente.pk,))
+        )
+        for response in (expiry, invoice):
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response["Content-Type"], "application/pdf")
+            self.assertTrue(response.content.startswith(b"%PDF"))
+        self.assertIn(
+            f"facture-{self.vente.reference}.pdf", invoice["Content-Disposition"]
+        )
