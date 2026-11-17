@@ -63,7 +63,12 @@ Les paramètres sensibles sont lus dans des variables d'environnement.
 | `DJANGO_SECRET_KEY` | Clé secrète | valeur de développement |
 | `DJANGO_DEBUG` | Mode debug (`1`/`0`) | `1` |
 | `DJANGO_ALLOWED_HOSTS` | Hôtes autorisés, séparés par des virgules | `localhost,127.0.0.1` |
+| `DJANGO_DB_ENGINE` | `sqlite` ou `postgresql` | `sqlite` |
 | `PHARMAGEST_DB_PATH` | Chemin de la base SQLite | `db.sqlite3` |
+| `DJANGO_DB_NAME` / `DJANGO_DB_USER` | Base et compte PostgreSQL | `pharmagest` |
+| `DJANGO_DB_PASSWORD` | Mot de passe PostgreSQL | vide |
+| `DJANGO_DB_HOST` / `DJANGO_DB_PORT` | Serveur PostgreSQL | `localhost` / `5432` |
+| `DJANGO_DB_CONN_MAX_AGE` | Durée de conservation des connexions (s) | `60` |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Expéditeur des e-mails | `pharmagest@example.test` |
 | `DJANGO_EMAIL_BACKEND` | Backend Django d'envoi | console en dev, SMTP en production |
 | `DJANGO_EMAIL_HOST` / `DJANGO_EMAIL_PORT` | Serveur SMTP | `localhost` / `25` |
@@ -77,6 +82,24 @@ Les paramètres sensibles sont lus dans des variables d'environnement.
 En production, définissez impérativement `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`
 et `DJANGO_ALLOWED_HOSTS`. Le mode production active la redirection HTTPS, les
 cookies sécurisés et HSTS.
+
+### PostgreSQL en production
+
+```bash
+createdb pharmagest
+export DJANGO_DB_ENGINE=postgresql
+export DJANGO_DB_NAME=pharmagest
+export DJANGO_DB_USER=pharmagest
+export DJANGO_DB_PASSWORD='mot-de-passe-solide'
+export DJANGO_DB_HOST=localhost
+export DJANGO_DB_PORT=5432
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+Le pilote `psycopg` est inclus dans `requirements.txt`. Les commandes
+`sauvegarder_bdd` et `restaurer_bdd` sont réservées à SQLite : avec PostgreSQL,
+utilisez `pg_dump` et `pg_restore`.
 
 ## Tests
 

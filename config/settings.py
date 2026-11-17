@@ -90,12 +90,32 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('PHARMAGEST_DB_PATH', BASE_DIR / 'db.sqlite3'),
+DB_ENGINE = os.environ.get("DJANGO_DB_ENGINE", "sqlite").strip().lower()
+
+if DB_ENGINE in {"postgresql", "postgres"}:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DJANGO_DB_NAME", "pharmagest"),
+            "USER": os.environ.get("DJANGO_DB_USER", "pharmagest"),
+            "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD", ""),
+            "HOST": os.environ.get("DJANGO_DB_HOST", "localhost"),
+            "PORT": os.environ.get("DJANGO_DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.environ.get("DJANGO_DB_CONN_MAX_AGE", "60")),
+        }
     }
-}
+elif DB_ENGINE == "sqlite":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.environ.get("PHARMAGEST_DB_PATH", BASE_DIR / "db.sqlite3"),
+        }
+    }
+else:
+    raise RuntimeError(
+        "DJANGO_DB_ENGINE doit valoir 'sqlite' ou 'postgresql' "
+        f"(valeur reçue : {DB_ENGINE!r})."
+    )
 
 
 # Password validation
