@@ -69,6 +69,10 @@ Les paramètres sensibles sont lus dans des variables d'environnement.
 | `DJANGO_EMAIL_HOST` / `DJANGO_EMAIL_PORT` | Serveur SMTP | `localhost` / `25` |
 | `DJANGO_EMAIL_HOST_USER` / `DJANGO_EMAIL_HOST_PASSWORD` | Identifiants SMTP | vide |
 | `DJANGO_EMAIL_USE_TLS` | TLS SMTP (`1`/`0`) | `0` |
+| `PHARMACIE_NOM` | Nom de l'officine sur les PDF | `Pharmacie PharmaGest` |
+| `PHARMACIE_ADRESSE` | Adresse sur les PDF | valeur d'exemple |
+| `PHARMACIE_TELEPHONE` / `PHARMACIE_EMAIL` | Contacts sur les PDF | valeur d'exemple |
+| `PHARMACIE_NIF` / `PHARMACIE_STAT` | Identifiants fiscaux sur les PDF | vide |
 
 En production, définissez impérativement `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`
 et `DJANGO_ALLOWED_HOSTS`. Le mode production active la redirection HTTPS, les

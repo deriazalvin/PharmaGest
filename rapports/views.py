@@ -3,6 +3,7 @@ from decimal import Decimal
 from io import BytesIO
 from xml.sax.saxutils import escape
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib import messages
 from django.db.models import (
@@ -181,6 +182,41 @@ def _sum_sales(queryset):
     return total
 
 
+def coordonnees_pharmacie():
+    """Lignes d'identité de l'officine imprimées en tête des PDF."""
+    contact = " · ".join(
+        valeur
+        for valeur in (
+            settings.PHARMACIE_ADRESSE,
+            settings.PHARMACIE_TELEPHONE,
+            settings.PHARMACIE_EMAIL,
+        )
+        if valeur
+    )
+    fiscal = " · ".join(
+        f"{libelle} : {valeur}"
+        for libelle, valeur in (
+            ("NIF", settings.PHARMACIE_NIF),
+            ("STAT", settings.PHARMACIE_STAT),
+        )
+        if valeur
+    )
+    return tuple(ligne for ligne in (contact, fiscal) if ligne)
+
+
+def _pied_de_page(canvas, doc):
+    canvas.saveState()
+    canvas.setFillColor(colors.HexColor("#5c6f6a"))
+    canvas.setFont("Helvetica", 7)
+    identite = settings.PHARMACIE_NOM
+    for libelle, valeur in (("NIF", settings.PHARMACIE_NIF), ("STAT", settings.PHARMACIE_STAT)):
+        if valeur:
+            identite += f" — {libelle} {valeur}"
+    canvas.drawString(15 * mm, 8 * mm, identite)
+    canvas.drawRightString(doc.pagesize[0] - 15 * mm, 8 * mm, f"Page {doc.page}")
+    canvas.restoreState()
+
+
 def _pdf_response(title, headers, rows, filename, details=()):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -189,11 +225,16 @@ def _pdf_response(title, headers, rows, filename, details=()):
         rightMargin=15 * mm,
         leftMargin=15 * mm,
         topMargin=18 * mm,
-        bottomMargin=15 * mm,
+        bottomMargin=18 * mm,
     )
     styles = getSampleStyleSheet()
     elements = [
-        Paragraph("PHARMAGEST", styles["Title"]),
+        Paragraph(escape(settings.PHARMACIE_NOM), styles["Title"]),
+        *(
+            Paragraph(escape(ligne), styles["Normal"])
+            for ligne in coordonnees_pharmacie()
+        ),
+        Spacer(1, 4 * mm),
         Paragraph(escape(title), styles["Heading2"]),
         Paragraph(
             f"Généré le {timezone.localtime():%d/%m/%Y à %H:%M}",
@@ -210,7 +251,7 @@ def _pdf_response(title, headers, rows, filename, details=()):
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f7f5")]),
         ("PADDING", (0, 0), (-1, -1), 7),
     ]))
-    doc.build(elements)
+    doc.build(elements, onFirstPage=_pied_de_page, onLaterPages=_pied_de_page)
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
@@ -398,8 +439,9 @@ def facture_vente_pdf(request, pk):
             f"{'confirmé' if vente.paiement_confirme else 'à vérifier'}",
             f"Total : {vente.total:,.2f} Ar",
             "Les prix appliqués sont ceux en vigueur au moment de la vente.",
-            "Mentions légales et fiscales à compléter selon la réglementation "
-            "applicable à Madagascar.",
+            "Document émis par "
+            f"{settings.PHARMACIE_NOM}. Mentions légales et fiscales à compléter "
+            "selon la réglementation applicable à Madagascar.",
         ),
     )
 

@@ -137,6 +137,16 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Identité de l'officine (en-tête et pied des documents PDF)
+PHARMACIE_NOM = os.environ.get("PHARMACIE_NOM", "Pharmacie PharmaGest")
+PHARMACIE_ADRESSE = os.environ.get(
+    "PHARMACIE_ADRESSE", "Lot II M 12 Bis, Antananarivo 101, Madagascar"
+)
+PHARMACIE_TELEPHONE = os.environ.get("PHARMACIE_TELEPHONE", "+261 34 00 000 00")
+PHARMACIE_EMAIL = os.environ.get("PHARMACIE_EMAIL", "contact@pharmagest.mg")
+PHARMACIE_NIF = os.environ.get("PHARMACIE_NIF", "")
+PHARMACIE_STAT = os.environ.get("PHARMACIE_STAT", "")
+
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'rapports:tableau_de_bord'
 LOGOUT_REDIRECT_URL = 'login'

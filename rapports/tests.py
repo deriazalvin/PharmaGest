@@ -1,11 +1,12 @@
 from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from categories.models import Categorie
 from medicaments.models import Medicament
+from rapports.views import coordonnees_pharmacie
 from stock.models import LotStock
 from ventes.models import LigneVente, Vente
 
@@ -74,3 +75,23 @@ class RapportViewsTests(TestCase):
         self.assertIn(
             f"facture-{self.vente.reference}.pdf", invoice["Content-Disposition"]
         )
+
+    @override_settings(
+        PHARMACIE_NOM="Pharmacie du Centre",
+        PHARMACIE_ADRESSE="Rue 1",
+        PHARMACIE_TELEPHONE="034 00 000 00",
+        PHARMACIE_EMAIL="",
+        PHARMACIE_NIF="123456789",
+        PHARMACIE_STAT="987654321",
+    )
+    def test_pdf_header_uses_the_configured_pharmacy_identity(self):
+        lignes = coordonnees_pharmacie()
+        self.assertEqual(lignes[0], "Rue 1 · 034 00 000 00")
+        self.assertEqual(
+            lignes[1], "NIF : 123456789 · STAT : 987654321"
+        )
+        invoice = self.client.get(
+            reverse("rapports:facture_vente", args=(self.vente.pk,))
+        )
+        self.assertEqual(invoice.status_code, 200)
+        self.assertTrue(invoice.content.startswith(b"%PDF"))
